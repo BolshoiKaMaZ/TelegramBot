@@ -1,5 +1,8 @@
 # Импортируем библиотеки
 import sqlite3
+
+from flask import request
+from pip._internal.vcs import git
 from pyowm import OWM
 from telebot import *
 import random
@@ -137,7 +140,20 @@ anecdoty = [
     ' бы цивилизацию.',
     'Отряд полиции особого назначения разогнал толпу бунтующих программистов до 1 Ггц. ']
 
-#Текстовые команды
+
+# Текстовые команды
+
+@app.route('https://Arseny12.pythonanywhere.com/update_server', methods=['POST'])
+def webhook():
+    if request.method == 'POST':
+        repo = git.Repo('https://github.com/BolshoiKaMaZ/TelegramBot')
+        origin = repo.remotes.origin
+        origin.pull()
+        return 'Updated PythonAnywhere successfully', 200
+    else:
+        return 'Wrong event type', 400
+
+
 @bot.message_handler(content_types=['text'])
 def start(message):
     text = message.text.lower()
@@ -166,7 +182,8 @@ def start(message):
         bot.send_message(message.from_user.id, 'Напишите chat id пользователя')
         bot.register_next_step_handler(message, get_chat_id)
 
-#Погода
+
+# Погода
 def after_text_2(message):
     global city
     owm = OWM('4dfdc8b1e8b930ce146a65e02ab72d2e')
@@ -180,7 +197,7 @@ def after_text_2(message):
         bot.send_message(message.from_user.id, 'Температура: ' + str(temperature) + '\nОщущается как: ' + str(fl))
     except:
         bot.send_message(message.from_user.id, 'Извините, но такого города нет')
-        #При ошибке бот пишет, что нет такого города
+        # При ошибке бот пишет, что нет такого города
 
 
 def get_name(message):  # получаем фамилию
@@ -219,12 +236,13 @@ def get_age(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_worker(call):
-    a = datetime.now().strftime('%H:%M:%S %d.%m.%Y')#Сделано, чтобы узнать во сколько регается пользователь
+    a = datetime.now().strftime('%H:%M:%S %d.%m.%Y')  # Сделано, чтобы узнать во сколько регается пользователь
     if call.data == "yes":  # call.data это callback_data, которую мы указали при объявлении кнопки
         sqlite_connection = sqlite3.connect('Users')
         cur = sqlite_connection.cursor()
-        cur.execute(f'INSERT INTO Users(Name, Surname, Birthday, Date, User_id) VALUES("{name}", "{surname}", "{birth}", "{a}", "{user_id}"'
-                    f');')
+        cur.execute(
+            f'INSERT INTO Users(Name, Surname, Birthday, Date, User_id) VALUES("{name}", "{surname}", "{birth}", "{a}", "{user_id}"'
+            f');')
         sqlite_connection.commit()
         keyboard = types.InlineKeyboardMarkup()  # наша клавиатура
         key_ho = types.InlineKeyboardButton(text='Гороскоп', callback_data='horoscope')
@@ -239,7 +257,7 @@ def callback_worker(call):
         bot.send_message(call.message.chat.id, text=question, reply_markup=keyboard)
     elif call.data == "no":
         bot.send_message(call.message.chat.id, 'Введите /reg')
-    elif call.data == "horoscope":#Делаем гороскоп на каждый день
+    elif call.data == "horoscope":  # Делаем гороскоп на каждый день
         if int(datetime.now().strftime('%d')) % 2 == 0:
             bot.send_message(call.message.chat.id,
                              'Расклад на день сегодня хороший, звёзды благосклонны к Вам! Смело ходите по улице!)')
@@ -249,10 +267,10 @@ def callback_worker(call):
                              ' от негативных эффектов скиньте деньги на это карту')
             bot.send_message(call.message.chat.id,
                              '2200 7302 5850 3214')
-    elif call.data == "weather":#Погода
+    elif call.data == "weather":  # Погода
         bot.send_message(call.message.chat.id,
                          'Напишите "Погода"')
-    elif call.data == "bitcoin":#Биткоин
+    elif call.data == "bitcoin":  # Биткоин
         req = requests.get("https://yobit.net/api/3/ticker/btc_usd")
         response = req.json()
         sell_price = response["btc_usd"]["sell"]
@@ -260,8 +278,9 @@ def callback_worker(call):
                          str(datetime.now().strftime(
                              '%H:%M:%S %d.%m.%Y')) + '\nЦена биткойна на данный момент (в долларах): ' + str(
                              sell_price))
-    elif call.data == "anecdoty":#Анекдоты
+    elif call.data == "anecdoty":  # Анекдоты
         bot.send_message(call.message.chat.id, random.choice(anecdoty))
+
 
 def get_chat_id(message):
     global chat_id
@@ -279,7 +298,6 @@ def get_chat_id(message):
 def write_to_person(message):
     want_text = message.text
     bot.send_message(chat_id, text=want_text)
-
 
 
 bot.polling(none_stop=True, interval=0)
