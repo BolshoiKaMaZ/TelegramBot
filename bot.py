@@ -143,7 +143,7 @@ anecdoty = [
 
 # Текстовые команды
 
-@app.route('https://Arseny12.pythonanywhere.com/update_server', methods=['POST'])
+@app.route('https://Arseny12.pythonanywhere.com', methods=['POST'])
 def webhook():
     if request.method == 'POST':
         repo = git.Repo('https://github.com/BolshoiKaMaZ/TelegramBot')
